@@ -6,5 +6,7 @@ authors = ["Armando Perez <gmandx@gmail.com>"]
 [dependencies]
 dialoguer = "^0.1"
 failure = "^0.1"
+failure_derive = "^0.1"
 itertools = "^0.7"
 url = "^1"
+open = "^1"

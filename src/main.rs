@@ -1,8 +1,10 @@
 extern crate dialoguer;
 extern crate failure;
+extern crate open;
 extern crate url;
 
 use std::collections::VecDeque;
+use std::io;
 
 use dialoguer::Select;
 use failure::Error;
@@ -28,14 +30,25 @@ fn main() -> Result<(), Error> {
         urls.push(url);
     }
 
-    if urls.len() < 1 {
+    if urls.is_empty() {
         eprintln!("No URLs detected");
+        return Err(io::Error::from_raw_os_error(1).into());
     }
 
     let options = urls.iter().map(|url| url.as_str()).collect::<Vec<_>>();
-    let selection = Select::new().items(&options).interact()?;
+    let selected_index = Select::new().items(&options).interact()?;
 
-    println!("Chosen {:?}", options[selection]);
-
-    Ok(())
+    match options.get(selected_index) {
+        Some(selection) => open::that(selection)
+            .and_then(|status| match status.code() {
+                Some(code) => if code == 0 {
+                    Ok(())
+                } else {
+                    Err(io::Error::from_raw_os_error(code))
+                },
+                None => Err(io::Error::from_raw_os_error(1)),
+            })
+            .or_else(|error| Err(error.into())),
+        None => Err(io::Error::from_raw_os_error(1).into()),
+    }
 }
